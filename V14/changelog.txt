@@ -1,0 +1,144 @@
+bastille day: il colpo del secolo
+
+let database = new schema({
+            Guild: interaction.guild.id,
+            Channel: channel.id,
+            UserLimit: userlimit
+        })
+
+        const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ChannelType } = require("discord.js");
+
+module.exports = {
+    data: new SlashCommandBuilder()
+        .setName("youtube")
+        .setDescription("Gestisci e ricevi notifiche dai canali Youtube")
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+        .addSubcommand(subcommand =>
+            subcommand.setName("add")
+                .setDescription("Aggiungi un canale per ricevere le notifiche di Youtube")
+                .addStringOption(option =>
+                    option.setName("link")
+                        .setDescription("Il link del canale del quale vuoi ricevere le notifiche")
+                        .setRequired(true)
+                )
+                .addChannelOption(option =>
+                    option.setName("channel")
+                        .setDescription("Il canale dove desidereresti che le notifiche fossero mandate")
+                        .setRequired(true)
+                        .addChannelTypes(ChannelType.GuildText)
+                )
+        )
+        .addSubcommand(subcommand =>
+            subcommand.setName("remove")
+                .setDescription("Rimuovi un canale registrato dalla lista delle notifiche")
+                .addStringOption(option =>
+                    option.setName("link")
+                        .setDescription("Il link del canale dal quale non vuoi più ricevere le notifiche")
+                        .setRequired(true)
+                )
+        )
+        .addSubcommand(subcommand =>
+            subcommand.setName("removeall")
+                .setDescription("Rimuovi tutti i canali registrati dalla lista delle notifiche")
+        )
+        .addSubcommand(subcommand =>
+            subcommand.setName("latestvideo")
+                .setDescription("Ottieni l'ultimo video da un canale")
+                .addStringOption(option =>
+                    option.setName("link")
+                        .setDescription("Il link del canale dal quale vuoi ottenere l'ultimo video")
+                        .setRequired(true)
+                )
+        )
+        .addSubcommand(subcommand =>
+            subcommand.setName("info")
+                .setDescription("Ottieni informazioni su un canale")
+                .addStringOption(option =>
+                    option.setName("link")
+                        .setDescription("Il link del canale dal quale vuoi ricevere informazioni")
+                        .setRequired(true)
+                )
+        ),
+    async execute(interaction, client) {
+        const { options, guildId } = interaction;
+
+        const sub = options.getSubcommand();
+        const link = options.getString("link");
+        const channel = options.getChannel("channel") || interaction.channel;
+
+        const embed = new EmbedBuilder();
+
+        try {
+            switch (sub) {
+                case "add":
+                    client.ytp.setChannel(link, channel).then(data => {
+                        interaction.reply({
+                            embeds: [embed.setDescription(`✅ | Aggiunto con successo il nuovo canale: ${data.YTchannel} in: ${channel}`).setColor("Green").setTimestamp()]
+                        });
+                    }).catch(err => {
+                        console.log(err)
+                        return interaction.reply({ embeds: [embed.setColor("Red").setDescription("Qualcosa è andato storto, per favore riprova più tardi.")] })
+                    });
+                    break;
+
+                case "remove":
+                    client.ytp.deleteChannel(link, channel).then(data => {
+                        interaction.reply({
+                            embeds: [embed.setDescription(`✅ | Rimosso con successo il canale: ${link} da: ${guildId}`).setColor("Green").setTimestamp()]
+                        });
+                    }).catch(err => {
+                        console.log(err)
+                        return interaction.reply({ embeds: [embed.setColor("Red").setDescription("Qualcosa è andato storto, per favore riprova più tardi.")] })
+                    });
+                    break;
+
+                case "removeall":
+                    client.ytp.deleteAllChannels(guildId).then(data => {
+                        interaction.reply({
+                            embeds: [embed.setDescription(`✅ | Rimossi con successo tutti in canali in: ${guildId}`).setColor("Green").setTimestamp()]
+                        });
+                    }).catch(err => {
+                        console.log(err)
+                        return interaction.reply({ embeds: [embed.setColor("Red").setDescription("Something went wrong, try again later...")] })
+                    });
+                    break;
+
+                case "latestvideo":
+                    client.ytp.getLatestVideos(link).then(data => {
+                        embed.setTitle(`${data[0].title}`)
+                            .setURL(data[0].link)
+                        interaction.reply({ embeds: [embed] });
+                        return interaction.channel.send({ content: `${data[0].link}` });
+                    }).catch(err => {
+                        console.log(err)
+                        return interaction.reply({ embeds: [embed.setColor("Red").setDescription("Something went wrong, try again later...")] })
+                    });
+                    break;
+
+                case "info":
+                    client.ytp.getChannelInfo(link).then(data => {
+                        embed.setTitle(data.name)
+                        .addFields(
+                            {name: "URL:", value: `${data.url}`, inline: true},
+                            {name: "Subscribers:", value: `${data.subscribers.split(" ")[0]}`, inline: true},
+                            {name: "Description:", value: `${data.description}`, inline: false},
+                        )
+                        .setTimestamp();
+                        interaction.reply({
+                            embeds: [embed]
+                        });
+                    }).catch(err => {
+                        console.log(err)
+                        return interaction.reply({ embeds: [embed.setColor("Red").setDescription("Something went wrong, try again later...")] })
+                    })
+            }
+        } catch (err) {
+            console.log(err)
+            return interaction.reply({ embeds: [embed.setColor("Red").setDescription("Something went wrong, try again later...")] })
+        }
+    }
+}
+
+                if (!data)
+                    return interaction.reply({ content: "Nessun dato trovato", ephemeral: true });
+                    suggestion 18
